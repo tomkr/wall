@@ -19,8 +19,8 @@ defmodule Wall.Router do
     get "/", PageController, :index
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", Wall do
-  #   pipe_through :api
-  # end
+  scope "/api", Wall do
+    pipe_through :api
+    resources "/events", EventController, only: [:index, :create]
+  end
 end
