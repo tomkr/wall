@@ -11,11 +11,6 @@ defmodule Wall.EventControllerTest do
     end
   end
 
-  test "lists all entries on index", %{conn: conn} do
-    conn = get conn, event_path(conn, :index)
-    assert json_response(conn, 200)["data"] == []
-  end
-
   test "creates resource and confirms Github commit status hooks", %{conn: conn, params: params} do
     conn = post conn, event_path(conn, :create), params
     assert json_response(conn, 201)["data"]["id"]

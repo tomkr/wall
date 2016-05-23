@@ -1,10 +1,6 @@
 defmodule Wall.EventView do
   use Wall.Web, :view
 
-  def render("index.json", %{events: events}) do
-    %{data: render_many(events, Wall.EventView, "event.json")}
-  end
-
   def render("show.json", %{event: event}) do
     %{data: render_one(event, Wall.EventView, "event.json")}
   end

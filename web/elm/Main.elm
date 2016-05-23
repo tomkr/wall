@@ -8,17 +8,6 @@ import Http
 import Task exposing (andThen)
 
 
-type alias Event =
-    { id : Int
-    , topic : String
-    , status : String
-    , date : String
-    , subtopic : String
-    , notes : String
-    , projectId : Int
-    }
-
-
 type alias Project =
     { id : Int
     , name : String
@@ -26,14 +15,13 @@ type alias Project =
 
 
 type alias Model =
-    { events : List Event
-    , projects : List Project
+    { projects : List Project
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model [] [], getInitialProjects )
+    ( Model [], getInitialProjects )
 
 
 
@@ -43,8 +31,7 @@ init =
 type Msg
     = NoOp
     | FetchFail Http.Error
-    | FetchEvents (List Event)
-    | FetchProjects (List Project)
+    | FetchSucceed (List Project)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -53,11 +40,8 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
-        FetchEvents events ->
-            ( { model | events = events }, Cmd.none )
-
-        FetchProjects projects ->
-            ( { model | projects = projects }, getInitialEvents )
+        FetchSucceed projects ->
+            ( { model | projects = projects }, Cmd.none )
 
         FetchFail err ->
             ( model, Cmd.none )
@@ -85,12 +69,6 @@ view model =
           else
             div [ class "placeholder" ]
                 [ text "There are no projects." ]
-        , if List.length model.events > 0 then
-            div [ class "events" ]
-                (List.map viewEvent model.events)
-          else
-            div [ class "placeholder" ]
-                [ text "There are no events." ]
         ]
 
 
@@ -107,26 +85,13 @@ viewProject project =
             [ text project.name ]
 
 
-viewEvent : Event -> Html Msg
-viewEvent event =
-    let
-        domId =
-            "event-" ++ (toString event.id)
-    in
-        div
-            [ id domId
-            , class "event"
-            ]
-            [ text (toString event) ]
-
-
 
 -- HTTP
 
 
 getInitialProjects : Cmd Msg
 getInitialProjects =
-    Task.perform FetchFail FetchProjects (Http.get decodeProjectsData "/api/projects")
+    Task.perform FetchFail FetchSucceed (Http.get decodeProjectsData "/api/projects")
 
 
 decodeProjectsData : Json.Decoder (List Project)
@@ -139,28 +104,6 @@ projectDecoder =
     Json.object2 Project
         ("id" := Json.int)
         ("name" := Json.string)
-
-
-getInitialEvents : Cmd Msg
-getInitialEvents =
-    Task.perform FetchFail FetchEvents (Http.get decodeEventsData "/api/events")
-
-
-decodeEventsData : Json.Decoder (List Event)
-decodeEventsData =
-    Json.at [ "data" ] (Json.list eventDecoder)
-
-
-eventDecoder : Json.Decoder Event
-eventDecoder =
-    Json.object7 Event
-        ("id" := Json.int)
-        ("topic" := Json.string)
-        ("status" := Json.string)
-        ("date" := Json.string)
-        ("subtopic" := Json.string)
-        ("notes" := Json.string)
-        ("projectId" := Json.int)
 
 
 

@@ -3,11 +3,6 @@ defmodule Wall.EventController do
 
   alias Wall.Event
 
-  def index(conn, _params) do
-    events = Repo.all(Event)
-    render(conn, "index.json", events: events)
-  end
-
   def create(conn, event_params) do
     changeset = Event.changeset(%Event{}, event_params)
 
