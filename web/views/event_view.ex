@@ -15,6 +15,7 @@ defmodule Wall.EventView do
       status: event.status,
       date: event.date,
       subtopic: event.subtopic,
-      notes: event.notes}
+      notes: event.notes,
+      projectId: event.project_id}
   end
 end

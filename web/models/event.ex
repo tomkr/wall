@@ -8,8 +8,8 @@ defmodule Wall.Event do
     field :date, Ecto.DateTime
     field :subtopic, :string
     field :notes, :string
-
     timestamps
+    belongs_to :project, Wall.Project
   end
 
   @required_fields ~w(payload topic status date)
