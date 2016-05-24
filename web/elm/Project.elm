@@ -18,6 +18,7 @@ type alias Model =
 -- VIEW
 
 
+view : Model -> Html x
 view project =
     let
         domId =
@@ -27,7 +28,13 @@ view project =
             [ id domId
             , class "project"
             ]
-            [ text project.name ]
+            [ viewTitle project.name ]
+
+
+viewTitle : String -> Html x
+viewTitle name =
+    div [ class "project__title" ]
+        [ text name ]
 
 
 decoder : Json.Decoder Model

@@ -67,12 +67,18 @@ view model =
             else
                 viewPlaceholder model
     in
-        div [] [ content ]
+        div
+            [ id "container"
+            , class "wall"
+            ]
+            [ content
+            , div [ class "events" ] []
+            ]
 
 
 viewProjects : Model -> Html Msg
 viewProjects model =
-    div [ class "projects" ]
+    div [ class "projects-list" ]
         (List.map Project.view model.projects)
 
 
