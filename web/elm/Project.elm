@@ -11,9 +11,16 @@ import Json.Decode as Json exposing ((:=))
 type alias Model =
     { id : Int
     , name : String
-    , masterBuildStatus : Maybe String
-    , latestBuildStatus : Maybe String
+    , masterBuildStatus : BuildStatus
+    , latestBuildStatus : BuildStatus
     }
+
+
+type BuildStatus
+    = Success
+    | Failed
+    | Pending
+    | Unknown
 
 
 
@@ -30,7 +37,9 @@ view project =
             [ id domId
             , class "project"
             ]
-            [ viewTitle project.name ]
+            [ viewTitle project.name
+            , viewBuildStatus project
+            ]
 
 
 viewTitle : String -> Html x
@@ -39,10 +48,61 @@ viewTitle name =
         [ text name ]
 
 
+viewBuildStatus : Model -> Html x
+viewBuildStatus project =
+    div [ class "project__build-status" ]
+        [ viewBuildBadge "primitive-dot" project.masterBuildStatus
+        , viewBuildBadge "git-branch" project.latestBuildStatus
+        ]
+
+
+viewBuildBadge : String -> BuildStatus -> Html x
+viewBuildBadge icon buildStatus =
+    let
+        className =
+            case buildStatus of
+                Success ->
+                    "badge--green"
+
+                Failed ->
+                    "badge--red"
+
+                Pending ->
+                    "badge--yellow"
+
+                Unknown ->
+                    "badge--gray"
+    in
+        span [ class ("badge " ++ className) ]
+            [ i [ class ("mega-octicon octicon-" ++ icon) ] []
+            ]
+
+
 decoder : Json.Decoder Model
 decoder =
     Json.object4 Model
         ("id" := Json.int)
         ("name" := Json.string)
-        (Json.maybe ("masterBuildStatus" := Json.string))
-        (Json.maybe ("latestBuildStatus" := Json.string))
+        ("masterBuildStatus" := buildStatusDecoder)
+        ("latestBuildStatus" := buildStatusDecoder)
+
+
+parseBuildStatus : Maybe String -> Result String BuildStatus
+parseBuildStatus value =
+    case value of
+        Just "success" ->
+            Result.Ok Success
+
+        Just "failed" ->
+            Result.Ok Failed
+
+        Just "pending" ->
+            Result.Ok Pending
+
+        _ ->
+            Result.Ok Unknown
+
+
+buildStatusDecoder : Json.Decoder BuildStatus
+buildStatusDecoder =
+    Json.customDecoder (Json.maybe Json.string) parseBuildStatus
