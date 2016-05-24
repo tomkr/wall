@@ -11,6 +11,8 @@ defmodule Wall.ProjectView do
 
   def render("project.json", %{project: project}) do
     %{id: project.id,
-      name: project.name}
+      name: project.name,
+      masterBuildStatus: project.master_build_status,
+      latestBuildStatus: project.latest_build_status}
   end
 end

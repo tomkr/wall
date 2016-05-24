@@ -11,6 +11,8 @@ import Json.Decode as Json exposing ((:=))
 type alias Model =
     { id : Int
     , name : String
+    , masterBuildStatus : Maybe String
+    , latestBuildStatus : Maybe String
     }
 
 
@@ -39,6 +41,8 @@ viewTitle name =
 
 decoder : Json.Decoder Model
 decoder =
-    Json.object2 Model
+    Json.object4 Model
         ("id" := Json.int)
         ("name" := Json.string)
+        (Json.maybe ("masterBuildStatus" := Json.string))
+        (Json.maybe ("latestBuildStatus" := Json.string))

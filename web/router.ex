@@ -22,5 +22,6 @@ defmodule Wall.Router do
   scope "/api", Wall do
     pipe_through :api
     resources "/projects", ProjectController, only: [:index]
+    resources "/events", EventController, only: [:create]
   end
 end
