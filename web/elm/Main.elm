@@ -5,17 +5,12 @@ import Html.Attributes exposing (..)
 import Html.App as Html
 import Json.Decode as Json exposing ((:=))
 import Http
-import Task exposing (andThen)
-
-
-type alias Project =
-    { id : Int
-    , name : String
-    }
+import Task
+import Project exposing (..)
 
 
 type alias Model =
-    { projects : List Project
+    { projects : List Project.Model
     }
 
 
@@ -31,7 +26,7 @@ init =
 type Msg
     = NoOp
     | FetchFail Http.Error
-    | FetchSucceed (List Project)
+    | FetchSucceed (List Project.Model)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -62,27 +57,29 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ if List.length model.projects > 0 then
-            div [ class "projects" ]
-                (List.map viewProject model.projects)
-          else
-            div [ class "placeholder" ]
-                [ text "There are no projects." ]
-        ]
-
-
-viewProject : Project -> Html Msg
-viewProject project =
     let
-        domId =
-            "project-" ++ (toString project.id)
+        anyProjects =
+            List.length model.projects > 0
+
+        content =
+            if anyProjects then
+                viewProjects model
+            else
+                viewPlaceholder model
     in
-        div
-            [ id domId
-            , class "project"
-            ]
-            [ text project.name ]
+        div [] [ content ]
+
+
+viewProjects : Model -> Html Msg
+viewProjects model =
+    div [ class "projects" ]
+        (List.map Project.view model.projects)
+
+
+viewPlaceholder : Model -> Html Msg
+viewPlaceholder model =
+    div [ class "placeholder" ]
+        [ text "There are no projects." ]
 
 
 
@@ -94,16 +91,9 @@ getInitialProjects =
     Task.perform FetchFail FetchSucceed (Http.get decodeProjectsData "/api/projects")
 
 
-decodeProjectsData : Json.Decoder (List Project)
+decodeProjectsData : Json.Decoder (List Project.Model)
 decodeProjectsData =
-    Json.at [ "data" ] (Json.list projectDecoder)
-
-
-projectDecoder : Json.Decoder Project
-projectDecoder =
-    Json.object2 Project
-        ("id" := Json.int)
-        ("name" := Json.string)
+    Json.at [ "data" ] (Json.list Project.decoder)
 
 
 
