@@ -37,8 +37,8 @@ view project =
             [ id domId
             , class "project"
             ]
-            [ viewTitle project.name
-            , viewBuildStatus project
+            [ viewBuildStatus project
+            , viewTitle project.name
             ]
 
 
@@ -87,22 +87,29 @@ decoder =
         ("latestBuildStatus" := buildStatusDecoder)
 
 
-parseBuildStatus : Maybe String -> Result String BuildStatus
+parseBuildStatus : String -> Result String BuildStatus
 parseBuildStatus value =
     case value of
-        Just "success" ->
-            Result.Ok Success
+        "success" ->
+            Ok Success
 
-        Just "failed" ->
-            Result.Ok Failed
+        "failed" ->
+            Ok Failed
 
-        Just "pending" ->
-            Result.Ok Pending
+        "pending" ->
+            Ok Pending
+
+        "" ->
+            Ok Unknown
 
         _ ->
-            Result.Ok Unknown
+            Err "Unexpected build status encountered"
 
 
 buildStatusDecoder : Json.Decoder BuildStatus
 buildStatusDecoder =
-    Json.customDecoder (Json.maybe Json.string) parseBuildStatus
+    let
+        nullOrStringDecoder =
+            Json.oneOf [ (Json.null ""), Json.string ]
+    in
+        Json.customDecoder nullOrStringDecoder parseBuildStatus
