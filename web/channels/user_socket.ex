@@ -3,6 +3,7 @@ defmodule Wall.UserSocket do
 
   ## Channels
   # channel "rooms:*", Wall.RoomChannel
+  channel "notifications:*", Wall.NotificationChannel
 
   ## Transports
   transport :websocket, Phoenix.Transports.WebSocket

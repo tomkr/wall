@@ -17,6 +17,7 @@ defmodule Wall.Router do
     pipe_through :browser # Use the default browser stack
 
     get "/", PageController, :index
+    get "/ping", PageController, :ping
   end
 
   scope "/api", Wall do

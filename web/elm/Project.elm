@@ -16,6 +16,14 @@ type alias Model =
     }
 
 
+type alias RawModel =
+    { id : Int
+    , name : String
+    , masterBuildStatus : Maybe String
+    , latestBuildStatus : Maybe String
+    }
+
+
 type BuildStatus
     = Success
     | Failed
@@ -113,3 +121,21 @@ buildStatusDecoder =
             Json.oneOf [ (Json.null ""), Json.string ]
     in
         Json.customDecoder nullOrStringDecoder parseBuildStatus
+
+
+parseRawModel : RawModel -> Model
+parseRawModel inputModel =
+    let
+        masterBuildStatus =
+            inputModel.masterBuildStatus
+                |> Maybe.withDefault ""
+                |> parseBuildStatus
+                |> Result.withDefault Unknown
+
+        latestBuildStatus =
+            inputModel.latestBuildStatus
+                |> Maybe.withDefault ""
+                |> parseBuildStatus
+                |> Result.withDefault Unknown
+    in
+        Model inputModel.id inputModel.name masterBuildStatus latestBuildStatus

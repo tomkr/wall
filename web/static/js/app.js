@@ -18,4 +18,16 @@
 // Local files can be imported directly using relative
 // paths "./socket" or full ones "web/static/js/socket".
 
-// import socket from "./socket"
+import socket from "./socket";
+
+window.init = function() {
+  window.app = Elm.Main.fullscreen();
+  const channel = socket.channel("notifications:lobby", {});
+  channel.on("notification", payload => {
+    try {
+      app.ports.notifications.send(payload);
+    } catch(e) {
+      console.error(e);
+    }
+  });
+}

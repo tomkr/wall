@@ -7,6 +7,7 @@ import Json.Decode as Json exposing ((:=))
 import Http
 import Task
 import Project exposing (..)
+import Ports exposing (..)
 
 
 type alias Model =
@@ -27,6 +28,7 @@ type Msg
     = NoOp
     | FetchFail Http.Error
     | FetchSucceed (List Project.Model)
+    | NewProject Project.Model
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -36,19 +38,20 @@ update msg model =
             ( model, Cmd.none )
 
         FetchSucceed projects ->
-            ( { model | projects = projects }, Cmd.none )
+            ( { model | projects = (List.sortBy .id projects) }, Cmd.none )
 
         FetchFail err ->
             ( model, Cmd.none )
 
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none
+        NewProject project ->
+            let
+                newProjects =
+                    model.projects
+                        |> List.filter (\p -> p.id /= project.id)
+                        |> List.append [ project ]
+                        |> List.sortBy .id
+            in
+                ( { model | projects = newProjects }, Cmd.none )
 
 
 
@@ -100,6 +103,15 @@ getInitialProjects =
 decodeProjectsData : Json.Decoder (List Project.Model)
 decodeProjectsData =
     Json.at [ "data" ] (Json.list Project.decoder)
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    notifications (NewProject << Project.parseRawModel)
 
 
 
