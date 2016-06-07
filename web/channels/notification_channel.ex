@@ -2,7 +2,7 @@ defmodule Wall.NotificationChannel do
   use Wall.Web, :channel
 
   def join("notifications:lobby", payload, socket) do
-    if authorized?(payload) do
+    if authorized?(payload, socket) do
       {:ok, socket}
     else
       {:error, %{reason: "unauthorized"}}
@@ -10,13 +10,21 @@ defmodule Wall.NotificationChannel do
   end
 
   def handle_out(event, payload, socket) do
-    IO.puts "******* sending out notification"
     push socket, event, payload
     {:noreply, socket}
   end
 
   # Add authorization logic here as required.
-  defp authorized?(_payload) do
-    true
+  defp authorized?(%{"token" => token}, socket) do
+    case Phoenix.Token.verify(socket, "user socket", token, max_age: 1209600) do
+      {:ok, _user_id} ->
+        true
+      {:error, _reason} ->
+        false
+    end
+  end
+
+  defp authorized?(_payload, _socket) do
+    false
   end
 end

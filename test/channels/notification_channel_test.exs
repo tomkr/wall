@@ -4,9 +4,10 @@ defmodule Wall.NotificationChannelTest do
   alias Wall.NotificationChannel
 
   setup do
+    token = Phoenix.Token.sign(@endpoint, "user socket", "foobar")
     {:ok, _, socket} =
-      socket("user_id", %{some: :assign})
-      |> subscribe_and_join(NotificationChannel, "notifications:lobby")
+      socket("user_id", %{foo: "bar"})
+      |> subscribe_and_join(NotificationChannel, "notifications:lobby", %{"token" => token})
 
     {:ok, socket: socket}
   end
