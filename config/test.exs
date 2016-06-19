@@ -9,6 +9,8 @@ config :wall, Wall.Endpoint,
 # Print only warnings and errors during test
 config :logger, level: :warn
 
+config :wall, :authstrategy, Wall.AuthStrategy.Password
+
 # Configure your database
 config :wall, Wall.Repo,
   adapter: Ecto.Adapters.Postgres,

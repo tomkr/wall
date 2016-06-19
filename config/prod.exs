@@ -19,6 +19,8 @@ config :wall, Wall.Endpoint,
 # Do not print debug messages in production
 config :logger, level: :info
 
+config :wall, :authstrategy, Wall.AuthStrategy.Google
+
 # ## SSL Support
 #
 # To get SSL working, you will need to add the `https` key

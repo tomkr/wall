@@ -36,6 +36,8 @@ defmodule Wall.Web do
 
       import Wall.Router.Helpers
       import Wall.Gettext
+
+      import Wall.Auth, only: [authenticate: 2]
     end
   end
 

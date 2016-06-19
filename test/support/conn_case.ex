@@ -26,6 +26,7 @@ defmodule Wall.ConnCase do
       import Ecto.Query, only: [from: 1, from: 2]
 
       import Wall.Router.Helpers
+      import Wall.TestHelpers
 
       # The default endpoint for testing
       @endpoint Wall.Endpoint

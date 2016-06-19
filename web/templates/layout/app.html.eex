@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hello Wall!</title>
     <link rel="stylesheet" href="<%= static_path(@conn, "/css/app.css") %>">
-    <%= if assigns[:user_token] do %>
-    <script>window.userToken = "<%= assigns[:user_token] %>";</script>
+    <%= if assigns[:account_token] do %>
+    <script>window.userToken = "<%= assigns[:account_token] %>";</script>
     <% end %>
     <script src="<%= static_path(@conn, "/js/app.js") %>"></script>
   </head>

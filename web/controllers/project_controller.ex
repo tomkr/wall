@@ -1,8 +1,6 @@
 defmodule Wall.ProjectController do
   use Wall.Web, :controller
 
-  alias Wall.Project
-
   def index(conn, _params) do
     query = from w in "wall",
       select: %{id: w.id,
