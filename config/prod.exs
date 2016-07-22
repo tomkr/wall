@@ -14,12 +14,25 @@ use Mix.Config
 config :wall, Wall.Endpoint,
   http: [port: {:system, "PORT"}],
   url: [host: "example.com", port: 80],
-  cache_static_manifest: "priv/static/manifest.json"
+  cache_static_manifest: "priv/static/manifest.json",
+  secret_key_base: System.get_env("SECRET_KEY_BASE")
+
+config :wall, Wall.Repo,
+  adapter: Ecto.Adapters.Postgres,
+  url: System.get_env("DATABASE_URL"),
+  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+  ssl: true
 
 # Do not print debug messages in production
 config :logger, level: :info
 
 config :wall, :authstrategy, Wall.AuthStrategy.Google
+
+config :wall, :oauth,
+  client_id: System.get_env("OAUTH_CLIENT_ID"),
+  client_secret: System.get_env("OAUTH_CLIENT_SECRET"),
+  redirect_uri: System.get_env("OAUTH_REDIRECT_URI"),
+  domain: System.get_env("OAUTH_DOMAIN")
 
 # ## SSL Support
 #
@@ -64,4 +77,4 @@ config :wall, :authstrategy, Wall.AuthStrategy.Google
 
 # Finally import the config/prod.secret.exs
 # which should be versioned separately.
-import_config "prod.secret.exs"
+# import_config "prod.secret.exs"
