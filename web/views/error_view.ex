@@ -6,7 +6,21 @@ defmodule Wall.ErrorView do
   end
 
   def render("500.html", _assigns) do
-    "Server internal error"
+    "Internal server error"
+  end
+
+  def render("errors.json", %{changeset: changeset}) do
+    %{errors: translate_errors(changeset)}
+  end
+
+  @doc """
+  Traverses and translates changeset errors.
+
+  See `Ecto.Changeset.traverse_errors/2` and
+  `Wall.ErrorHelpers.translate_error/1` for more details.
+  """
+  def translate_errors(changeset) do
+    Ecto.Changeset.traverse_errors(changeset, &translate_error/1)
   end
 
   # In case no render clause matches or no

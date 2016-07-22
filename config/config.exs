@@ -5,12 +5,15 @@
 # is restricted to this project.
 use Mix.Config
 
+config :wall,
+  ecto_repos: [Wall.Repo]
+
 # Configures the endpoint
 config :wall, Wall.Endpoint,
-  url: [host: "localhost"],
   root: Path.dirname(__DIR__),
+  url: [host: "localhost"],
   secret_key_base: "Pnt5X6VzmeChmO1aPYNSum+JnnEZKFsuqImOuHZt6UaEyYItY932cff0eMlHDj+w",
-  render_errors: [accepts: ~w(html json)],
+  render_errors: [view: Wall.ErrorView, accepts: ~w(html json)],
   pubsub: [name: Wall.PubSub,
            adapter: Phoenix.PubSub.PG2]
 

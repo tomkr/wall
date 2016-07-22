@@ -14,7 +14,7 @@ defmodule Wall.EventController do
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)
-        |> render(Wall.ChangesetView, "error.json", changeset: changeset)
+        |> render(Wall.ErrorView, "errors.json", changeset: changeset)
     end
   end
 end
