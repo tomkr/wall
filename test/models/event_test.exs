@@ -7,7 +7,7 @@ defmodule Wall.EventTest do
 
   setup do
     with {:ok, content} = File.read("test/fixtures/github.json"),
-         params = Poison.decode!(content)
+         params = Map.put(Poison.decode!(content), "project_id", "1")
     do
       {:ok, params: params}
     end
@@ -24,7 +24,8 @@ defmodule Wall.EventTest do
       %{"app" => "myapp",
         "release" => "v12",
         "git_log" => "  * fix specs",
-        "head" => "123abc"}
+        "head" => "123abc",
+        "project_id" => "1"}
     )
     assert changeset.valid?
   end

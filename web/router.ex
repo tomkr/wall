@@ -28,8 +28,8 @@ defmodule Wall.Router do
 
   scope "/api", Wall do
     pipe_through :api
-    resources "/projects", ProjectController, only: [:index]
-    resources "/events", EventController, only: [:create]
+    get "/projects", ProjectController, :index
+    post "/events/:token", EventController, :create
   end
 
   defp put_account_token(conn, _params) do
