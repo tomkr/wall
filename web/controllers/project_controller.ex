@@ -17,7 +17,7 @@ defmodule Wall.ProjectController do
       {:ok, project} ->
         Wall.Endpoint.broadcast(
           "notifications:lobby",
-          "notification",
+          "newProject",
           Wall.ProjectView.render("project.json", %{project: project})
         )
         conn
@@ -36,6 +36,11 @@ defmodule Wall.ProjectController do
 
     case Repo.update(changeset) do
       {:ok, project} ->
+        Wall.Endpoint.broadcast(
+          "notifications:lobby",
+          "updateProject",
+          Wall.ProjectView.render("project.json", %{project: project})
+        )
         render(conn, "show.json", project: project)
       {:error, changeset} ->
         conn
@@ -47,6 +52,11 @@ defmodule Wall.ProjectController do
   def delete(conn, %{"id" => id}) do
     project = Repo.get!(Wall.Project, id)
     Repo.delete!(project)
+    Wall.Endpoint.broadcast(
+      "notifications:lobby",
+      "deleteProject",
+      Wall.ProjectView.render("project.json", %{project: project})
+    )
     send_resp(conn, :no_content, "")
   end
 end

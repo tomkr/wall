@@ -23,11 +23,25 @@ import socket from "./socket";
 window.init = function() {
   window.app = Elm.Main.fullscreen();
   const channel = socket.channel("notifications:lobby", {});
-  channel.on("notification", payload => {
+  channel.on("newProject", payload => {
     try {
-      app.ports.notifications.send(payload);
+      app.ports.newProjectNotifications.send(payload);
     } catch(e) {
       console.error(e);
     }
   });
-}
+  channel.on("updateProject", payload => {
+    try {
+      app.ports.updateProjectNotifications.send(payload);
+    } catch(e) {
+      console.error(e);
+    }
+  });
+  channel.on("deleteProject", payload => {
+    try {
+      app.ports.deleteProjectNotifications.send(payload);
+    } catch(e) {
+      console.error(e);
+    }
+  });
+};

@@ -2,7 +2,7 @@ module ProjectForm exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (class, type', id, for, value, disabled, href)
-import Html.Events exposing (onWithOptions, onSubmit, onClick, targetValue)
+import Html.Events exposing (onInput, onSubmit, onClick)
 import Json.Decode
 import Json.Encode
 import Html.App
@@ -24,17 +24,33 @@ type alias Model =
     { name : ( Maybe String, Errors )
     , waiting : Bool
     , postError : Maybe String
+    , isNew : Bool
+    , id : Maybe Int
     }
 
 
-initialModel : ( Model, Cmd Msg )
+initialModel : Model
 initialModel =
-    ( { name = ( Nothing, [] )
-      , waiting = False
-      , postError = Nothing
-      }
-    , Cmd.none
-    )
+    { name = ( Nothing, [] )
+    , waiting = False
+    , postError = Nothing
+    , isNew = True
+    , id = Nothing
+    }
+
+
+fromProject : Project.Model -> Model
+fromProject project =
+    { initialModel
+        | name = ( Just project.name, [] )
+        , isNew = False
+        , id = Just project.id
+    }
+
+
+init : ( Model, Cmd Msg )
+init =
+    ( initialModel, Cmd.none )
 
 
 type Msg
@@ -47,6 +63,25 @@ type Msg
 
 
 -- FUNCTIONS
+
+
+isValid : Model -> Bool
+isValid model =
+    let
+        hasErrors =
+            model.name
+                |> snd
+                |> List.isEmpty
+
+        isFilledOut =
+            case fst model.name of
+                Just str ->
+                    True
+
+                Nothing ->
+                    False
+    in
+        hasErrors && isFilledOut
 
 
 validatePresence : String -> Errors
@@ -68,10 +103,13 @@ update msg model =
             { model | name = ( Just str, (validatePresence str) ) } ! []
 
         Submit ->
-            { model | waiting = True } ! [ postProject model ]
+            if isValid model then
+                { model | waiting = True } ! [ postProject model ]
+            else
+                ( model, Cmd.none )
 
         Cancel ->
-            initialModel
+            init
 
         PostFail error ->
             case error of
@@ -90,7 +128,7 @@ update msg model =
                         ! []
 
         PostSucceed body ->
-            initialModel
+            init
 
 
 
@@ -105,6 +143,16 @@ view model =
 
         errors =
             snd model.name
+
+        hasErrors =
+            List.isEmpty errors
+
+        inputClassName =
+            "input string"
+                ++ if hasErrors then
+                    ""
+                   else
+                    " with-errors"
     in
         div
             [ class "project-form-wrapper" ]
@@ -117,13 +165,7 @@ view model =
                 , onSubmit Submit
                 ]
                 [ div
-                    [ class
-                        ("input string"
-                            ++ if List.isEmpty errors then
-                                ""
-                               else
-                                " with-errors"
-                        )
+                    [ class inputClassName
                     ]
                     [ label
                         [ for "project-form-name" ]
@@ -131,7 +173,7 @@ view model =
                     , input
                         [ id "project-form-name"
                         , type' "text"
-                        , onWithOptions "input" { stopPropagation = True, preventDefault = False } (Json.Decode.map SetName targetValue)
+                        , onInput SetName
                         , value modelName
                         ]
                         []
@@ -175,15 +217,21 @@ viewControls model =
 
                 Nothing ->
                     True
+
+        label =
+            if model.isNew then
+                "Create Project"
+            else
+                "Update Project"
     in
         if model.waiting then
-            div [] [ text "waiting" ]
+            div [] [ text "Please wait..." ]
         else
             div
                 [ class "controls" ]
                 [ input
                     [ type' "submit"
-                    , value "Create Project"
+                    , value label
                     , disabled hasErrors
                     ]
                     []
@@ -209,12 +257,28 @@ postProject model =
                 |> fst
                 |> Maybe.withDefault ""
 
+        method =
+            if model.isNew then
+                "post"
+            else
+                "patch"
+
         body =
             Http.multipart
-                [ Http.stringData "project[name]" name ]
+                [ Http.stringData "project[name]" name
+                , Http.stringData "_method" method
+                ]
+
+        url =
+            case model.id of
+                Nothing ->
+                    "/api/projects"
+
+                Just id ->
+                    "/api/projects/" ++ (toString id)
     in
         body
-            |> Http.post decodePostData "/api/projects"
+            |> Http.post decodePostData url
             |> Task.perform PostFail PostSucceed
 
 
@@ -238,7 +302,7 @@ subscriptions model =
 
 main =
     Html.App.program
-        { init = initialModel
+        { init = init
         , view = view
         , update = update
         , subscriptions = subscriptions

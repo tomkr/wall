@@ -15,8 +15,8 @@ import ProjectForm
 
 type alias Model =
     { projects : List Project.Model
-    , newProjectFormVisible : Bool
-    , newProject : ProjectForm.Model
+    , showProjectForm : Bool
+    , editableProject : ProjectForm.Model
     }
 
 
@@ -24,7 +24,7 @@ init : ( Model, Cmd Msg )
 init =
     let
         ( projectFormModel, projectFormEffects ) =
-            ProjectForm.initialModel
+            ProjectForm.init
 
         effects =
             Cmd.batch
@@ -44,11 +44,14 @@ type Msg
     | FetchFail Http.Error
     | FetchSucceed (List Project.Model)
     | NewProject Project.Model
+    | UpdateProject Project.Model
     | ProjectFormMsg ProjectForm.Msg
-    | ShowProjectForm
+    | NewProjectForm
+    | EditProjectForm Project.Model
     | DestroyProject Project.Model
     | DestroyFail Http.Error
     | DestroySucceed Project.Model String
+    | ProjectDestroyed Project.Model
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -63,39 +66,75 @@ update msg model =
         FetchFail err ->
             ( model, Cmd.none )
 
+        ProjectDestroyed project ->
+            let
+                projects =
+                    model.projects
+                        |> List.filter (\p -> p.id /= project.id)
+                        |> List.sortBy .id
+            in
+                ( { model | projects = projects }, Cmd.none )
+
         NewProject project ->
             let
-                newProjects =
+                editableProjects =
                     model.projects
                         |> List.filter (\p -> p.id /= project.id)
                         |> List.append [ project ]
                         |> List.sortBy .id
             in
-                ( { model | projects = newProjects }, Cmd.none )
+                ( { model | projects = editableProjects }, Cmd.none )
+
+        UpdateProject project ->
+            let
+                projects =
+                    model.projects
+                        |> List.map
+                            (\p ->
+                                if p.id == project.id then
+                                    project
+                                else
+                                    p
+                            )
+            in
+                ( { model | projects = projects }, Cmd.none )
 
         ProjectFormMsg childMsg ->
             let
-                ( newProject, projectFormEffects ) =
-                    ProjectForm.update childMsg model.newProject
+                ( editableProject, projectFormEffects ) =
+                    ProjectForm.update childMsg model.editableProject
 
                 newModel =
-                    { model | newProject = newProject }
+                    { model | editableProject = editableProject }
 
                 effects =
                     Cmd.map ProjectFormMsg projectFormEffects
             in
                 case childMsg of
                     ProjectForm.Cancel ->
-                        ( { newModel | newProjectFormVisible = False }, effects )
+                        ( { newModel | showProjectForm = False }, effects )
 
                     ProjectForm.PostSucceed model ->
-                        ( { newModel | newProjectFormVisible = False }, effects )
+                        ( { newModel | showProjectForm = False }, effects )
 
                     _ ->
                         ( newModel, effects )
 
-        ShowProjectForm ->
-            ( { model | newProjectFormVisible = True }, Cmd.none )
+        NewProjectForm ->
+            ( { model
+                | showProjectForm = True
+                , editableProject = ProjectForm.initialModel
+              }
+            , Cmd.none
+            )
+
+        EditProjectForm project ->
+            ( { model
+                | showProjectForm = True
+                , editableProject = ProjectForm.fromProject project
+              }
+            , Cmd.none
+            )
 
         DestroyProject project ->
             ( model, destroyProject project )
@@ -105,12 +144,7 @@ update msg model =
             ( model, Cmd.none )
 
         DestroySucceed project body ->
-            let
-                projects =
-                    model.projects
-                        |> List.filter (\p -> p.id /= project.id)
-            in
-                ( { model | projects = projects }, Cmd.none )
+            ( model, Cmd.none )
 
 
 
@@ -129,8 +163,8 @@ view model =
             else
                 viewPlaceholder model
 
-        newProjectForm =
-            if model.newProjectFormVisible then
+        editableProjectForm =
+            if model.showProjectForm then
                 viewNewProjectForm model
             else
                 div [] []
@@ -139,13 +173,42 @@ view model =
             [ id "container"
             , class "wall"
             ]
-            [ newProjectForm
-            , a
-                [ onClick ShowProjectForm ]
-                [ text "Add Project" ]
+            [ editableProjectForm
+            , viewNav
             , content
             , div [ class "events" ] []
             ]
+
+
+viewNav : Html Msg
+viewNav =
+    div
+        [ class "nav" ]
+        [ a
+            [ onClick NewProjectForm
+            , href "#"
+            , title "Create a new project and add it to the wall"
+            ]
+            [ span
+                [ class "octicon octicon-plus" ]
+                []
+            ]
+        , span
+            [ class "account" ]
+            [ span
+                [ class "octicon octicon-person" ]
+                []
+            , strong
+                []
+                [ text "avdgaag" ]
+            ]
+        , a
+            [ class "octicon octicon-sign-out"
+            , href "/logout"
+            , title "Sign out"
+            ]
+            []
+        ]
 
 
 viewNewProjectForm : Model -> Html Msg
@@ -154,7 +217,7 @@ viewNewProjectForm model =
         [ class "dialog" ]
         [ (Html.map
             ProjectFormMsg
-            (ProjectForm.view model.newProject)
+            (ProjectForm.view model.editableProject)
           )
         ]
 
@@ -187,14 +250,24 @@ viewProject project =
             ]
 
 
+minibutton : String -> String -> msg -> Html msg
+minibutton icon description msg =
+    a
+        [ class "minibutton"
+        , title description
+        , onClick msg
+        ]
+        [ span
+            [ class ("octicon octicon-" ++ icon) ]
+            []
+        ]
+
+
 viewControls : Project.Model -> Html Msg
 viewControls project =
     div [ class "project__controls" ]
-        [ a
-            [ class "minibutton"
-            , onClick <| DestroyProject project
-            ]
-            [ text "×" ]
+        [ minibutton "gear" "Remove this project" (EditProjectForm project)
+        , minibutton "trashcan" "Remove this project" (DestroyProject project)
         ]
 
 
@@ -271,7 +344,11 @@ destroyProject project =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    notifications (NewProject << Project.parseRawModel)
+    Sub.batch
+        [ newProjectNotifications (NewProject << Project.parseRawModel)
+        , updateProjectNotifications (UpdateProject << Project.parseRawModel)
+        , deleteProjectNotifications (ProjectDestroyed << Project.parseRawModel)
+        ]
 
 
 
