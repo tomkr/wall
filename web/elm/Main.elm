@@ -5,6 +5,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Html.App as Html
 import Json.Decode as Json exposing ((:=))
+import Json.Encode
 import Http
 import Task
 import Project exposing (..)
@@ -45,6 +46,9 @@ type Msg
     | NewProject Project.Model
     | ProjectFormMsg ProjectForm.Msg
     | ShowProjectForm
+    | DestroyProject Project.Model
+    | DestroyFail Http.Error
+    | DestroySucceed Project.Model String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -92,6 +96,21 @@ update msg model =
 
         ShowProjectForm ->
             ( { model | newProjectFormVisible = True }, Cmd.none )
+
+        DestroyProject project ->
+            ( model, destroyProject project )
+
+        DestroyFail error ->
+            -- todo we could use some error alerting or flashing here
+            ( model, Cmd.none )
+
+        DestroySucceed project body ->
+            let
+                projects =
+                    model.projects
+                        |> List.filter (\p -> p.id /= project.id)
+            in
+                ( { model | projects = projects }, Cmd.none )
 
 
 
@@ -143,13 +162,76 @@ viewNewProjectForm model =
 viewProjects : Model -> Html Msg
 viewProjects model =
     div [ class "projects-list" ]
-        (List.map Project.view model.projects)
+        (List.map viewProject model.projects)
 
 
 viewPlaceholder : Model -> Html Msg
 viewPlaceholder model =
     div [ class "placeholder" ]
         [ text "There are no projects!" ]
+
+
+viewProject : Project.Model -> Html Msg
+viewProject project =
+    let
+        domId =
+            "project-" ++ (toString project.id)
+    in
+        div
+            [ id domId
+            , class "project"
+            ]
+            [ viewBuildStatus project
+            , viewTitle project.name
+            , viewControls project
+            ]
+
+
+viewControls : Project.Model -> Html Msg
+viewControls project =
+    div [ class "project__controls" ]
+        [ a
+            [ class "minibutton"
+            , onClick <| DestroyProject project
+            ]
+            [ text "×" ]
+        ]
+
+
+viewTitle : String -> Html Msg
+viewTitle name =
+    div [ class "project__title" ]
+        [ text name ]
+
+
+viewBuildStatus : Project.Model -> Html Msg
+viewBuildStatus project =
+    div [ class "project__build-status" ]
+        [ viewBuildBadge "primitive-dot" project.masterBuildStatus
+        , viewBuildBadge "git-branch" project.latestBuildStatus
+        ]
+
+
+viewBuildBadge : String -> Project.BuildStatus -> Html Msg
+viewBuildBadge icon buildStatus =
+    let
+        className =
+            case buildStatus of
+                Project.Success ->
+                    "badge--green"
+
+                Project.Failed ->
+                    "badge--red"
+
+                Project.Pending ->
+                    "badge--yellow"
+
+                Project.Unknown ->
+                    "badge--gray"
+    in
+        span [ class ("badge " ++ className) ]
+            [ i [ class ("mega-octicon octicon-" ++ icon) ] []
+            ]
 
 
 
@@ -164,6 +246,23 @@ getInitialProjects =
 decodeProjectsData : Json.Decoder (List Project.Model)
 decodeProjectsData =
     Json.at [ "data" ] (Json.list Project.decoder)
+
+
+destroyProject : Project.Model -> Cmd Msg
+destroyProject project =
+    let
+        url =
+            "/api/projects/" ++ (toString project.id)
+
+        decoder =
+            Json.succeed ""
+
+        body =
+            Http.multipart
+                [ Http.stringData "_method" "delete" ]
+    in
+        Http.post decoder url body
+            |> Task.perform DestroyFail (DestroySucceed project)
 
 
 
