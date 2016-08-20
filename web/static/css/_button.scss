@@ -34,4 +34,8 @@
     background-color: desaturate(darken($color, 8%), 8%);
     box-shadow: inset 0px 3px 1px rgba(0, 0, 0, .15);
   }
+
+  &:disabled {
+    background-color: #999;
+  }
 }

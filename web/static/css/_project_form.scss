@@ -1,0 +1,66 @@
+input[type=submit] {
+  @include button($color-purple);
+}
+
+input[type=text] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px;
+  font-size: 16px;
+  border: 1px solid #999;
+}
+
+.with-errors input {
+  background-color: #ffe1e1;
+  border: 1px solid #900;
+}
+
+.input {
+  margin: 20px 0;
+}
+
+.errors {
+  margin: 0;
+  list-style: none;
+  padding: 0;
+  color: #900;
+  font-weight: bold;
+}
+
+.cancel {
+  font-weight: bold;
+  color: #900;
+}
+
+.controls {
+  color: #999;
+}
+
+.controls input {
+  display: inline-block;
+  width: auto;
+}
+
+.dialog {
+  width: 50%;
+  padding: 20px;
+  margin: 0 auto;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 5px 5px;
+  box-shadow: 0 0 15px rgba(0,0,0,.15);
+  position: absolute;
+  background: #fff;
+  left: 50%;
+  margin-left: -25%;
+}
+
+.dialog h2 {
+  font-size: 16px;
+  text-transform: uppercase;
+  color: #444;
+  border-bottom: 1px solid #ccc;
+  margin: -20px -20px 0;
+  padding: 20px 20px 19px;
+  background-color: #f9f9f9;
+}

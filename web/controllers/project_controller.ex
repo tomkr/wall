@@ -15,6 +15,11 @@ defmodule Wall.ProjectController do
     project = Wall.Project.changeset(%Wall.Project{}, project_params)
     case Repo.insert(project) do
       {:ok, project} ->
+        Wall.Endpoint.broadcast(
+          "notifications:lobby",
+          "notification",
+          Wall.ProjectView.render("project.json", %{project: project})
+        )
         conn
         |> put_status(:created)
         |> render("show.json", project: project)

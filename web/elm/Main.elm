@@ -2,22 +2,36 @@ module Main exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
 import Html.App as Html
 import Json.Decode as Json exposing ((:=))
 import Http
 import Task
 import Project exposing (..)
 import Ports exposing (..)
+import ProjectForm
 
 
 type alias Model =
     { projects : List Project.Model
+    , newProjectFormVisible : Bool
+    , newProject : ProjectForm.Model
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model [], getInitialProjects )
+    let
+        ( projectFormModel, projectFormEffects ) =
+            ProjectForm.initialModel
+
+        effects =
+            Cmd.batch
+                [ getInitialProjects
+                , Cmd.map ProjectFormMsg projectFormEffects
+                ]
+    in
+        ( Model [] False projectFormModel, getInitialProjects )
 
 
 
@@ -29,6 +43,8 @@ type Msg
     | FetchFail Http.Error
     | FetchSucceed (List Project.Model)
     | NewProject Project.Model
+    | ProjectFormMsg ProjectForm.Msg
+    | ShowProjectForm
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -53,6 +69,30 @@ update msg model =
             in
                 ( { model | projects = newProjects }, Cmd.none )
 
+        ProjectFormMsg childMsg ->
+            let
+                ( newProject, projectFormEffects ) =
+                    ProjectForm.update childMsg model.newProject
+
+                newModel =
+                    { model | newProject = newProject }
+
+                effects =
+                    Cmd.map ProjectFormMsg projectFormEffects
+            in
+                case childMsg of
+                    ProjectForm.Cancel ->
+                        ( { newModel | newProjectFormVisible = False }, effects )
+
+                    ProjectForm.PostSucceed model ->
+                        ( { newModel | newProjectFormVisible = False }, effects )
+
+                    _ ->
+                        ( newModel, effects )
+
+        ShowProjectForm ->
+            ( { model | newProjectFormVisible = True }, Cmd.none )
+
 
 
 -- VIEW
@@ -69,14 +109,35 @@ view model =
                 viewProjects model
             else
                 viewPlaceholder model
+
+        newProjectForm =
+            if model.newProjectFormVisible then
+                viewNewProjectForm model
+            else
+                div [] []
     in
         div
             [ id "container"
             , class "wall"
             ]
-            [ content
+            [ newProjectForm
+            , a
+                [ onClick ShowProjectForm ]
+                [ text "Add Project" ]
+            , content
             , div [ class "events" ] []
             ]
+
+
+viewNewProjectForm : Model -> Html Msg
+viewNewProjectForm model =
+    div
+        [ class "dialog" ]
+        [ (Html.map
+            ProjectFormMsg
+            (ProjectForm.view model.newProject)
+          )
+        ]
 
 
 viewProjects : Model -> Html Msg
@@ -88,7 +149,7 @@ viewProjects model =
 viewPlaceholder : Model -> Html Msg
 viewPlaceholder model =
     div [ class "placeholder" ]
-        [ text "There are no projects." ]
+        [ text "There are no projects!" ]
 
 
 
