@@ -114,7 +114,7 @@ update msg model =
                     ProjectForm.Cancel ->
                         ( { newModel | showProjectForm = False }, effects )
 
-                    ProjectForm.PostSucceed model ->
+                    ProjectForm.PostSucceed str ->
                         ( { newModel | showProjectForm = False }, effects )
 
                     _ ->

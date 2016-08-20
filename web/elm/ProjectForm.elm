@@ -58,7 +58,7 @@ type Msg
     | Submit
     | Cancel
     | PostFail Http.Error
-    | PostSucceed Project
+    | PostSucceed String
 
 
 
@@ -127,7 +127,7 @@ update msg model =
                     }
                         ! []
 
-        PostSucceed body ->
+        PostSucceed str ->
             init
 
 
@@ -276,15 +276,13 @@ postProject model =
 
                 Just id ->
                     "/api/projects/" ++ (toString id)
+
+        decoder =
+            Json.Decode.succeed ""
     in
         body
-            |> Http.post decodePostData url
+            |> Http.post decoder url
             |> Task.perform PostFail PostSucceed
-
-
-decodePostData : Json.Decode.Decoder (Project)
-decodePostData =
-    Json.Decode.at [ "data" ] Project.decoder
 
 
 
