@@ -105,7 +105,7 @@ update msg model =
             if isValid model then
                 { model | waiting = True } ! [ postProject model ]
             else
-                ( model, Cmd.none )
+                model ! []
 
         Cancel ->
             init
