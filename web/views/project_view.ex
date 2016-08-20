@@ -12,7 +12,7 @@ defmodule Wall.ProjectView do
   def render("project.json", %{project: project}) do
     %{id: project.id,
       name: project.name,
-      masterBuildStatus: project.master_build_status,
-      latestBuildStatus: project.latest_build_status}
+      masterBuildStatus: Map.get(project, :master_build_status, nil),
+      latestBuildStatus: Map.get(project, :latest_build_status, nil)}
   end
 end
