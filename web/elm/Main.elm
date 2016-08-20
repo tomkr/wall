@@ -8,8 +8,8 @@ import Json.Decode as Json exposing ((:=))
 import Json.Encode
 import Http
 import Task
-import Project exposing (..)
-import Ports exposing (..)
+import Project
+import Ports
 import ProjectForm
 
 
@@ -345,9 +345,9 @@ destroyProject project =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ newProjectNotifications (NewProject << Project.parseRawModel)
-        , updateProjectNotifications (UpdateProject << Project.parseRawModel)
-        , deleteProjectNotifications (ProjectDestroyed << Project.parseRawModel)
+        [ Ports.newProjectNotifications (NewProject << Project.parseRawModel)
+        , Ports.updateProjectNotifications (UpdateProject << Project.parseRawModel)
+        , Ports.deleteProjectNotifications (ProjectDestroyed << Project.parseRawModel)
         ]
 
 
