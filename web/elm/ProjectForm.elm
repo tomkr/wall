@@ -10,7 +10,7 @@ import String
 import Task
 import Http
 import Json.Decode
-import Project
+import Project exposing (Project)
 
 
 -- MODEL
@@ -20,7 +20,7 @@ type alias Errors =
     List String
 
 
-type alias Model =
+type alias ProjectForm =
     { name : ( Maybe String, Errors )
     , waiting : Bool
     , postError : Maybe String
@@ -29,8 +29,8 @@ type alias Model =
     }
 
 
-initialModel : Model
-initialModel =
+initialProjectForm : ProjectForm
+initialProjectForm =
     { name = ( Nothing, [] )
     , waiting = False
     , postError = Nothing
@@ -39,18 +39,18 @@ initialModel =
     }
 
 
-fromProject : Project.Model -> Model
+fromProject : Project -> ProjectForm
 fromProject project =
-    { initialModel
+    { initialProjectForm
         | name = ( Just project.name, [] )
         , isNew = False
         , id = Just project.id
     }
 
 
-init : ( Model, Cmd Msg )
+init : ( ProjectForm, Cmd Msg )
 init =
-    ( initialModel, Cmd.none )
+    ( initialProjectForm, Cmd.none )
 
 
 type Msg
@@ -58,14 +58,14 @@ type Msg
     | Submit
     | Cancel
     | PostFail Http.Error
-    | PostSucceed Project.Model
+    | PostSucceed Project
 
 
 
 -- FUNCTIONS
 
 
-isValid : Model -> Bool
+isValid : ProjectForm -> Bool
 isValid model =
     let
         hasErrors =
@@ -96,7 +96,7 @@ validatePresence str =
 -- UPDATE
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Msg -> ProjectForm -> ( ProjectForm, Cmd Msg )
 update msg model =
     case msg of
         SetName str ->
@@ -135,7 +135,7 @@ update msg model =
 -- VIEW
 
 
-view : Model -> Html Msg
+view : ProjectForm -> Html Msg
 view model =
     let
         modelName =
@@ -204,7 +204,7 @@ viewPostError msg =
             div [] []
 
 
-viewControls : Model -> Html Msg
+viewControls : ProjectForm -> Html Msg
 viewControls model =
     let
         hasErrors =
@@ -249,7 +249,7 @@ viewControls model =
 -- TASKS
 
 
-postProject : Model -> Cmd Msg
+postProject : ProjectForm -> Cmd Msg
 postProject model =
     let
         name =
@@ -282,7 +282,7 @@ postProject model =
             |> Task.perform PostFail PostSucceed
 
 
-decodePostData : Json.Decode.Decoder (Project.Model)
+decodePostData : Json.Decode.Decoder (Project)
 decodePostData =
     Json.Decode.at [ "data" ] Project.decoder
 
@@ -291,7 +291,7 @@ decodePostData =
 -- SUBSCRIPTIONS
 
 
-subscriptions : Model -> Sub Msg
+subscriptions : ProjectForm -> Sub Msg
 subscriptions model =
     Sub.none
 

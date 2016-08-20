@@ -1,12 +1,12 @@
 port module Ports exposing (..)
 
-import Project
+import Project exposing (RawProject)
 
 
-port newProjectNotifications : (Project.RawModel -> msg) -> Sub msg
+port newProjectNotifications : (RawProject -> msg) -> Sub msg
 
 
-port updateProjectNotifications : (Project.RawModel -> msg) -> Sub msg
+port updateProjectNotifications : (RawProject -> msg) -> Sub msg
 
 
-port deleteProjectNotifications : (Project.RawModel -> msg) -> Sub msg
+port deleteProjectNotifications : (RawProject -> msg) -> Sub msg

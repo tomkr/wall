@@ -8,15 +8,15 @@ import Json.Decode as Json exposing ((:=))
 import Json.Encode
 import Http
 import Task
-import Project
+import Project exposing (Project)
 import Ports
-import ProjectForm
+import ProjectForm exposing (ProjectForm)
 
 
 type alias Model =
-    { projects : List Project.Model
+    { projects : List Project
     , showProjectForm : Bool
-    , editableProject : ProjectForm.Model
+    , editableProject : ProjectForm
     }
 
 
@@ -42,16 +42,16 @@ init =
 type Msg
     = NoOp
     | FetchFail Http.Error
-    | FetchSucceed (List Project.Model)
-    | NewProject Project.Model
-    | UpdateProject Project.Model
+    | FetchSucceed (List Project)
+    | NewProject Project
+    | UpdateProject Project
     | ProjectFormMsg ProjectForm.Msg
     | NewProjectForm
-    | EditProjectForm Project.Model
-    | DestroyProject Project.Model
+    | EditProjectForm Project
+    | DestroyProject Project
     | DestroyFail Http.Error
-    | DestroySucceed Project.Model String
-    | ProjectDestroyed Project.Model
+    | DestroySucceed Project String
+    | ProjectDestroyed Project
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -123,7 +123,7 @@ update msg model =
         NewProjectForm ->
             ( { model
                 | showProjectForm = True
-                , editableProject = ProjectForm.initialModel
+                , editableProject = ProjectForm.initialProjectForm
               }
             , Cmd.none
             )
@@ -234,7 +234,7 @@ viewPlaceholder model =
         [ text "There are no projects!" ]
 
 
-viewProject : Project.Model -> Html Msg
+viewProject : Project -> Html Msg
 viewProject project =
     let
         domId =
@@ -263,7 +263,7 @@ minibutton icon description msg =
         ]
 
 
-viewControls : Project.Model -> Html Msg
+viewControls : Project -> Html Msg
 viewControls project =
     div [ class "project__controls" ]
         [ minibutton "gear" "Remove this project" (EditProjectForm project)
@@ -277,7 +277,7 @@ viewTitle name =
         [ text name ]
 
 
-viewBuildStatus : Project.Model -> Html Msg
+viewBuildStatus : Project -> Html Msg
 viewBuildStatus project =
     div [ class "project__build-status" ]
         [ viewBuildBadge "primitive-dot" project.masterBuildStatus
@@ -316,12 +316,12 @@ getInitialProjects =
     Task.perform FetchFail FetchSucceed (Http.get decodeProjectsData "/api/projects")
 
 
-decodeProjectsData : Json.Decoder (List Project.Model)
+decodeProjectsData : Json.Decoder (List Project)
 decodeProjectsData =
     Json.at [ "data" ] (Json.list Project.decoder)
 
 
-destroyProject : Project.Model -> Cmd Msg
+destroyProject : Project -> Cmd Msg
 destroyProject project =
     let
         url =
@@ -345,9 +345,9 @@ destroyProject project =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Ports.newProjectNotifications (NewProject << Project.parseRawModel)
-        , Ports.updateProjectNotifications (UpdateProject << Project.parseRawModel)
-        , Ports.deleteProjectNotifications (ProjectDestroyed << Project.parseRawModel)
+        [ Ports.newProjectNotifications (NewProject << Project.parseRawProject)
+        , Ports.updateProjectNotifications (UpdateProject << Project.parseRawProject)
+        , Ports.deleteProjectNotifications (ProjectDestroyed << Project.parseRawProject)
         ]
 
 

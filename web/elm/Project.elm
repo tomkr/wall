@@ -6,7 +6,7 @@ import Json.Decode as Json exposing ((:=))
 -- MODEL
 
 
-type alias Model =
+type alias Project =
     { id : Int
     , name : String
     , masterBuildStatus : BuildStatus
@@ -14,7 +14,7 @@ type alias Model =
     }
 
 
-type alias RawModel =
+type alias RawProject =
     { id : Int
     , name : String
     , masterBuildStatus : Maybe String
@@ -33,9 +33,9 @@ type BuildStatus
 -- VIEW
 
 
-decoder : Json.Decoder Model
+decoder : Json.Decoder Project
 decoder =
-    Json.object4 Model
+    Json.object4 Project
         ("id" := Json.int)
         ("name" := Json.string)
         ("masterBuildStatus" := buildStatusDecoder)
@@ -70,19 +70,19 @@ buildStatusDecoder =
         Json.customDecoder nullOrStringDecoder parseBuildStatus
 
 
-parseRawModel : RawModel -> Model
-parseRawModel inputModel =
+parseRawProject : RawProject -> Project
+parseRawProject inputProject =
     let
         masterBuildStatus =
-            inputModel.masterBuildStatus
+            inputProject.masterBuildStatus
                 |> Maybe.withDefault ""
                 |> parseBuildStatus
                 |> Result.withDefault Unknown
 
         latestBuildStatus =
-            inputModel.latestBuildStatus
+            inputProject.latestBuildStatus
                 |> Maybe.withDefault ""
                 |> parseBuildStatus
                 |> Result.withDefault Unknown
     in
-        Model inputModel.id inputModel.name masterBuildStatus latestBuildStatus
+        Project inputProject.id inputProject.name masterBuildStatus latestBuildStatus
