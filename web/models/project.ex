@@ -19,5 +19,6 @@ defmodule Wall.Project do
   def changeset(model, params \\ :empty) do
     model
     |> cast(params, @required_fields, @optional_fields)
+    |> validate_required(:name)
   end
 end

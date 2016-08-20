@@ -31,6 +31,19 @@ defmodule Wall.ProjectControllerTest do
     } = json_response(conn, 201)["data"]
   end
 
+  test "updates and renders chosen resource when data is valid", %{conn: conn} do
+    project = Repo.insert! %Wall.Project{name: "test"}
+    conn = put conn, project_path(conn, :update, project), project: %{name: "new name"}
+    assert json_response(conn, 200)["data"]["id"]
+    assert Repo.get_by(Wall.Project, %{name: "new name"})
+  end
+
+  test "does not update chosen resource and renders errors when data is invalid", %{conn: conn} do
+    project = Repo.insert! %Wall.Project{name: "test"}
+    conn = put conn, project_path(conn, :update, project), project: %{name: ""}
+    assert json_response(conn, 422)["errors"] != %{}
+  end
+
   test "destroys an existing project", %{conn: conn} do
     Repo.insert(%Wall.Project{id: 1, name: "project 1"})
     assert Repo.aggregate(Wall.Project, :count, :id) == 1
