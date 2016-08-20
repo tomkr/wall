@@ -283,25 +283,3 @@ postProject model =
         body
             |> Http.post decoder url
             |> Task.perform PostFail PostSucceed
-
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : ProjectForm -> Sub Msg
-subscriptions model =
-    Sub.none
-
-
-
--- WIRING
-
-
-main =
-    Html.App.program
-        { init = init
-        , view = view
-        , update = update
-        , subscriptions = subscriptions
-        }
