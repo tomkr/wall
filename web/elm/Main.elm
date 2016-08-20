@@ -5,7 +5,6 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Html.App as Html
 import Json.Decode as Json exposing ((:=))
-import Json.Encode
 import Http
 import Task
 import Project exposing (Project)
@@ -355,6 +354,7 @@ subscriptions model =
 -- WIRING
 
 
+main : Program Never
 main =
     Html.program
         { update = update

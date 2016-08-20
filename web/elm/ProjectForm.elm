@@ -5,7 +5,6 @@ import Html.Attributes exposing (class, type', id, for, value, disabled, href)
 import Html.Events exposing (onInput, onSubmit, onClick)
 import Json.Decode
 import Json.Encode
-import Html.App
 import String
 import Task
 import Http
