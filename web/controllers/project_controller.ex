@@ -45,21 +45,8 @@ defmodule Wall.ProjectController do
   end
 
   def delete(conn, %{"id" => id}) do
-    case Repo.get(Wall.Project, id) do
-      project when is_map(project) ->
-        case Repo.delete(project) do
-          {:ok, _project} ->
-            conn
-            |> json(%{})
-          {:error, _changeset} ->
-            conn
-            |> put_status(:unprocessable_entity)
-            |> json(%{})
-        end
-      _ ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> json(%{})
-    end
+    project = Repo.get!(Wall.Project, id)
+    Repo.delete!(project)
+    send_resp(conn, :no_content, "")
   end
 end

@@ -48,7 +48,7 @@ defmodule Wall.ProjectControllerTest do
     Repo.insert(%Wall.Project{id: 1, name: "project 1"})
     assert Repo.aggregate(Wall.Project, :count, :id) == 1
     conn = delete conn, project_path(conn, :delete, 1)
-    assert response(conn, 200) == "{}"
+    assert response(conn, 204) == ""
     assert Repo.aggregate(Wall.Project, :count, :id) == 0
   end
 end
