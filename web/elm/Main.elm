@@ -4,9 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Html.App
-import Json.Decode as Json exposing ((:=))
-import Http
-import Task
+import Api
 import Project exposing (Project)
 import ProjectList exposing (ProjectList)
 import Ports
@@ -28,11 +26,11 @@ init =
 
         effects =
             Cmd.batch
-                [ getInitialProjects
+                [ Cmd.map ApiMsg Api.getAll
                 , Cmd.map ProjectFormMsg projectFormEffects
                 ]
     in
-        ( Model ProjectList.initialModel False projectFormModel, getInitialProjects )
+        ( Model ProjectList.initialModel False projectFormModel, effects )
 
 
 
@@ -41,10 +39,7 @@ init =
 
 type Msg
     = NoOp
-    | FetchFailed Http.Error
-    | FetchSucceeded (List Project)
-    | DestroyFailed Http.Error
-    | DestroySucceeded Project String
+    | ApiMsg Api.Msg
     | ProjectCreated Project
     | ProjectUpdated Project
     | ProjectDestroyed Project
@@ -59,14 +54,16 @@ update msg model =
         NoOp ->
             model ! []
 
-        FetchSucceeded projects ->
-            { model
-                | projects = ProjectList.sort projects
-            }
-                ! []
+        ApiMsg msg ->
+            case msg of
+                Api.FetchSucceeded projects ->
+                    { model
+                        | projects = ProjectList.sort projects
+                    }
+                        ! []
 
-        FetchFailed err ->
-            model ! []
+                _ ->
+                    model ! []
 
         ProjectDestroyed project ->
             { model
@@ -101,8 +98,16 @@ update msg model =
                     ProjectForm.Cancel ->
                         ( { newModel | showProjectForm = False }, effects )
 
-                    ProjectForm.PostSucceed str ->
-                        ( { newModel | showProjectForm = False }, effects )
+                    ProjectForm.ApiMsg msg ->
+                        case msg of
+                            Api.CreateSucceeded _ ->
+                                ( { newModel | showProjectForm = False }, effects )
+
+                            Api.UpdateSucceeded _ ->
+                                ( { newModel | showProjectForm = False }, effects )
+
+                            _ ->
+                                ( newModel, effects )
 
                     _ ->
                         ( newModel, effects )
@@ -117,7 +122,7 @@ update msg model =
         ProjectMsg msg ->
             case msg of
                 Project.DestroyProject project ->
-                    model ! [ destroyProject project ]
+                    model ! [ Cmd.map ApiMsg <| Api.destroy project ]
 
                 Project.EditProjectForm project ->
                     { model
@@ -128,13 +133,6 @@ update msg model =
 
                 _ ->
                     model ! []
-
-        DestroyFailed error ->
-            -- todo we could use some error alerting or flashing here
-            model ! []
-
-        DestroySucceeded project body ->
-            model ! []
 
 
 
@@ -201,37 +199,6 @@ viewNewProjectForm model =
             (ProjectForm.view model.editableProject)
           )
         ]
-
-
-
--- HTTP
-
-
-getInitialProjects : Cmd Msg
-getInitialProjects =
-    Task.perform FetchFailed FetchSucceeded (Http.get decodeProjectsData "/api/projects")
-
-
-decodeProjectsData : Json.Decoder (List Project)
-decodeProjectsData =
-    Json.at [ "data" ] (Json.list Project.decoder)
-
-
-destroyProject : Project -> Cmd Msg
-destroyProject project =
-    let
-        url =
-            "/api/projects/" ++ (toString project.id)
-
-        decoder =
-            Json.succeed ""
-
-        body =
-            Http.multipart
-                [ Http.stringData "_method" "delete" ]
-    in
-        Http.post decoder url body
-            |> Task.perform DestroyFailed (DestroySucceeded project)
 
 
 

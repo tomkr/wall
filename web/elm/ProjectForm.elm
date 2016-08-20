@@ -5,6 +5,7 @@ import Html.Attributes exposing (class, type', id, for, value, disabled, href)
 import Html.Events exposing (onInput, onSubmit, onClick)
 import Json.Decode
 import Json.Encode
+import Api
 import String
 import Task
 import Http
@@ -56,8 +57,7 @@ type Msg
     = SetName String
     | Submit
     | Cancel
-    | PostFail Http.Error
-    | PostSucceed String
+    | ApiMsg Api.Msg
 
 
 
@@ -102,32 +102,56 @@ update msg model =
             { model | name = ( Just str, (validatePresence str) ) } ! []
 
         Submit ->
-            if isValid model then
-                { model | waiting = True } ! [ postProject model ]
-            else
-                model ! []
+            let
+                name =
+                    model.name
+                        |> fst
+                        |> Maybe.withDefault ""
+            in
+                if isValid model then
+                    { model | waiting = True } ! [ Cmd.map ApiMsg <| Api.create name ]
+                else
+                    model ! []
 
         Cancel ->
             init
 
-        PostFail error ->
-            case error of
-                Http.BadResponse code status ->
-                    { model
-                        | waiting = False
-                        , postError = Just "The endpoint was not found."
-                    }
-                        ! []
+        ApiMsg msg ->
+            case msg of
+                Api.CreateFailed error ->
+                    case error of
+                        Http.BadResponse code status ->
+                            { model
+                                | waiting = False
+                                , postError = Just "The endpoint was not found."
+                            }
+                                ! []
+
+                        _ ->
+                            { model
+                                | waiting = False
+                                , postError = Just "An unknown error occured."
+                            }
+                                ! []
+
+                Api.UpdateFailed error ->
+                    case error of
+                        Http.BadResponse code status ->
+                            { model
+                                | waiting = False
+                                , postError = Just "The endpoint was not found."
+                            }
+                                ! []
+
+                        _ ->
+                            { model
+                                | waiting = False
+                                , postError = Just "An unknown error occured."
+                            }
+                                ! []
 
                 _ ->
-                    { model
-                        | waiting = False
-                        , postError = Just "An unknown error occured."
-                    }
-                        ! []
-
-        PostSucceed str ->
-            init
+                    init
 
 
 
@@ -242,43 +266,3 @@ viewControls model =
                     ]
                     [ text "cancel" ]
                 ]
-
-
-
--- TASKS
-
-
-postProject : ProjectForm -> Cmd Msg
-postProject model =
-    let
-        name =
-            model.name
-                |> fst
-                |> Maybe.withDefault ""
-
-        method =
-            if model.isNew then
-                "post"
-            else
-                "patch"
-
-        body =
-            Http.multipart
-                [ Http.stringData "project[name]" name
-                , Http.stringData "_method" method
-                ]
-
-        url =
-            case model.id of
-                Nothing ->
-                    "/api/projects"
-
-                Just id ->
-                    "/api/projects/" ++ (toString id)
-
-        decoder =
-            Json.Decode.succeed ""
-    in
-        body
-            |> Http.post decoder url
-            |> Task.perform PostFail PostSucceed
