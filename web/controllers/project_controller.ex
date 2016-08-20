@@ -10,4 +10,18 @@ defmodule Wall.ProjectController do
     projects = Repo.all(query)
     render(conn, "index.json", projects: projects)
   end
+
+  def create(conn, %{"project" => project_params}) do
+    project = Wall.Project.changeset(%Wall.Project{}, project_params)
+    case Repo.insert(project) do
+      {:ok, project} ->
+        conn
+        |> put_status(:created)
+        |> render("show.json", project: project)
+      {:error, changeset} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(Wall.ErrorView, "errors.json", %{changeset: changeset})
+    end
+  end
 end

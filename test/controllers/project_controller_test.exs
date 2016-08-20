@@ -15,4 +15,19 @@ defmodule Wall.ProjectControllerTest do
         "latestBuildStatus" => nil}
     ]
   end
+
+  test "shows an error when a new project is invalid", %{conn: conn} do
+    conn = post conn, project_path(conn, :create), project: %{}
+    assert json_response(conn, 422)["errors"]["name"] == ["can't be blank"]
+  end
+
+  test "creates a new project when it is valid", %{conn: conn} do
+    conn = post conn, project_path(conn, :create), project: %{name: "My project"}
+    assert %{
+      "id" => _,
+      "latestBuildStatus" => nil,
+      "masterBuildStatus" => nil,
+      "name" => "My project"
+    } = json_response(conn, 201)["data"]
+  end
 end
