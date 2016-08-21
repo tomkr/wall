@@ -14,11 +14,16 @@ import ProjectForm exposing (ProjectForm)
 type alias Model =
     { projects : ProjectList
     , projectForm : ProjectForm
+    , username : String
     }
 
 
-init : ( Model, Cmd Msg )
-init =
+type alias Flags =
+    { username : String }
+
+
+init : Flags -> ( Model, Cmd Msg )
+init { username } =
     let
         ( projectFormModel, projectFormEffects ) =
             ProjectForm.init
@@ -29,7 +34,7 @@ init =
                 , Cmd.map ProjectFormMsg projectFormEffects
                 ]
     in
-        ( Model ProjectList.initialModel projectFormModel, effects )
+        ( Model ProjectList.initialModel projectFormModel username, effects )
 
 
 
@@ -132,14 +137,14 @@ view model =
         , class "wall"
         ]
         [ viewNewProjectForm model
-        , viewNav
+        , viewNav model.username
         , Html.App.map ProjectMsg <| ProjectList.view model.projects
         , div [ class "events" ] []
         ]
 
 
-viewNav : Html Msg
-viewNav =
+viewNav : String -> Html Msg
+viewNav username =
     div
         [ class "nav" ]
         [ a
@@ -158,7 +163,7 @@ viewNav =
                 []
             , strong
                 []
-                [ text "avdgaag" ]
+                [ text username ]
             ]
         , a
             [ class "octicon octicon-sign-out"
@@ -191,9 +196,9 @@ subscriptions model =
 -- WIRING
 
 
-main : Program Never
+main : Program Flags
 main =
-    Html.App.program
+    Html.App.programWithFlags
         { update = update
         , view = view
         , init = init

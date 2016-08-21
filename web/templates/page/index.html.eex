@@ -1,3 +1,3 @@
 <script>
-  init();
+  init({ username: "<%= @current_account.name %>" });
 </script>

@@ -20,8 +20,8 @@
 
 import socket from "./socket";
 
-window.init = function() {
-  window.app = Elm.Main.fullscreen();
+window.init = function(options) {
+  window.app = Elm.Main.fullscreen(options);
   const channel = socket.channel("notifications:lobby", {});
   channel.on("newProject", payload => {
     try {
