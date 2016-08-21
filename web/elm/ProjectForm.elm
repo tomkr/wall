@@ -20,8 +20,12 @@ type alias Errors =
     List String
 
 
+type alias Attribute =
+    ( Maybe String, Errors )
+
+
 type alias ProjectForm =
-    { name : ( Maybe String, Errors )
+    { name : Attribute
     , waiting : Bool
     , postError : Maybe String
     , id : Maybe Int
@@ -103,6 +107,14 @@ validatePresence str =
         []
 
 
+attr : (ProjectForm -> Attribute) -> ProjectForm -> String
+attr fun model =
+    model
+        |> fun
+        |> fst
+        |> Maybe.withDefault ""
+
+
 
 -- UPDATE
 
@@ -120,16 +132,13 @@ update msg model =
             { model | name = ( Just str, (validatePresence str) ) } ! []
 
         Submit ->
-            let
-                name =
-                    model.name
-                        |> fst
-                        |> Maybe.withDefault ""
-            in
-                if isValid model then
-                    { model | waiting = True } ! [ Cmd.map ApiMsg <| Api.create name ]
-                else
-                    model ! []
+            if isValid model then
+                { model
+                    | waiting = True
+                }
+                    ! [ Cmd.map ApiMsg <| Api.create <| attr .name model ]
+            else
+                model ! []
 
         Cancel ->
             init
