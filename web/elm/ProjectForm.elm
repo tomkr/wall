@@ -115,6 +115,24 @@ attr fun model =
         |> Maybe.withDefault ""
 
 
+addError : String -> ProjectForm -> ProjectForm
+addError desc model =
+    { model
+        | waiting = False
+        , postError = Just desc
+    }
+
+
+addHttpError : Http.Error -> ProjectForm -> ProjectForm
+addHttpError error model =
+    case error of
+        Http.BadResponse code status ->
+            addError "The endpoint was not found" model
+
+        _ ->
+            addError "An unknown error occured." model
+
+
 
 -- UPDATE
 
@@ -132,13 +150,17 @@ update msg model =
             { model | name = ( Just str, (validatePresence str) ) } ! []
 
         Submit ->
-            if isValid model then
-                { model
-                    | waiting = True
-                }
-                    ! [ Cmd.map ApiMsg <| Api.create <| attr .name model ]
-            else
-                model ! []
+            let
+                effects =
+                    model
+                        |> attr .name
+                        |> Api.create
+                        |> Cmd.map ApiMsg
+            in
+                if isValid model then
+                    { model | waiting = True } ! [ effects ]
+                else
+                    model ! []
 
         Cancel ->
             init
@@ -146,36 +168,10 @@ update msg model =
         ApiMsg msg ->
             case msg of
                 Api.CreateFailed error ->
-                    case error of
-                        Http.BadResponse code status ->
-                            { model
-                                | waiting = False
-                                , postError = Just "The endpoint was not found."
-                            }
-                                ! []
-
-                        _ ->
-                            { model
-                                | waiting = False
-                                , postError = Just "An unknown error occured."
-                            }
-                                ! []
+                    addHttpError error model ! []
 
                 Api.UpdateFailed error ->
-                    case error of
-                        Http.BadResponse code status ->
-                            { model
-                                | waiting = False
-                                , postError = Just "The endpoint was not found."
-                            }
-                                ! []
-
-                        _ ->
-                            { model
-                                | waiting = False
-                                , postError = Just "An unknown error occured."
-                            }
-                                ! []
+                    addHttpError error model ! []
 
                 _ ->
                     init
