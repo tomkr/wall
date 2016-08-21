@@ -19,6 +19,8 @@ type Msg
     | CreateSucceeded String
     | UpdateFailed Http.Error
     | UpdateSucceeded String
+    | GetTokenFailed Http.Error
+    | GetTokenSucceeded String
 
 
 
@@ -81,8 +83,24 @@ destroy token project =
             |> Task.perform DestroyFailed DestroySucceeded
 
 
+eventToken : String -> Project -> Cmd Msg
+eventToken token project =
+    let
+        url =
+            Http.url ("/api/projects/" ++ (toString project.id) ++ "/token") [ ( "token", token ) ]
+    in
+        url
+            |> Http.get decodeTokenData
+            |> Task.perform GetTokenFailed GetTokenSucceeded
+
+
 
 -- DECODERS
+
+
+decodeTokenData : Json.Decode.Decoder String
+decodeTokenData =
+    Json.Decode.at [ "token" ] Json.Decode.string
 
 
 decodeProjectsData : Json.Decode.Decoder ProjectList

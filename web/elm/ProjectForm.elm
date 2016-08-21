@@ -1,7 +1,7 @@
 module ProjectForm exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (class, type', id, for, value, disabled, href)
+import Html.Attributes exposing (class, type', id, for, value, disabled, href, title)
 import Html.Events exposing (onInput, onSubmit, onClick)
 import Api
 import String
@@ -27,6 +27,7 @@ type alias ProjectForm =
     , id : Maybe Int
     , isOpen : Bool
     , token : String
+    , generatedToken : Maybe String
     }
 
 
@@ -38,6 +39,7 @@ initialProjectForm token =
     , id = Nothing
     , isOpen = False
     , token = token
+    , generatedToken = Nothing
     }
 
 
@@ -76,6 +78,7 @@ type Msg
     | ApiMsg Api.Msg
     | Open
     | Edit Project
+    | GenerateToken
 
 
 
@@ -187,6 +190,20 @@ update msg model =
         Cancel ->
             init model.token
 
+        GenerateToken ->
+            let
+                effects =
+                    case toProject model of
+                        Ok project ->
+                            project
+                                |> Api.eventToken model.token
+                                |> Cmd.map ApiMsg
+
+                        Err str ->
+                            Cmd.none
+            in
+                model ! [ effects ]
+
         ApiMsg msg ->
             case msg of
                 Api.CreateFailed error ->
@@ -194,6 +211,12 @@ update msg model =
 
                 Api.UpdateFailed error ->
                     addHttpError error model ! []
+
+                Api.GetTokenFailed error ->
+                    addHttpError error model ! []
+
+                Api.GetTokenSucceeded token ->
+                    { model | generatedToken = Just token } ! []
 
                 _ ->
                     init model.token
@@ -255,12 +278,63 @@ view model =
                                     errors
                                 )
                             ]
+                        , viewToken model
                         , viewControls model
                         ]
                     ]
                 ]
         else
             div [] []
+
+
+viewToken : ProjectForm -> Html Msg
+viewToken model =
+    let
+        truncate =
+            \n str -> (String.left n str) ++ "..." ++ (String.right n str)
+
+        link =
+            case model.generatedToken of
+                Just token ->
+                    span
+                        []
+                        [ a
+                            [ href ("/api/events/" ++ token)
+                            , title "Send events to this URL"
+                            , class "token-generator__token"
+                            ]
+                            [ token |> truncate 10 |> text ]
+                        , a
+                            [ href "#"
+                            , title "Generate a new secret URI to post events to"
+                            , onClick GenerateToken
+                            ]
+                            [ span
+                                [ class "octicon octicon-sync" ]
+                                []
+                            ]
+                        ]
+
+                Nothing ->
+                    a
+                        [ href "#"
+                        , title "Generate a new secret URI to post events to"
+                        , onClick GenerateToken
+                        ]
+                        [ text "Generate an API token"
+                        ]
+    in
+        if isNew model then
+            div [] []
+        else
+            div
+                [ class "token-generator" ]
+                [ span
+                    [ class "octicon octicon-shield"
+                    ]
+                    []
+                , link
+                ]
 
 
 viewPostError : Maybe String -> Html Msg

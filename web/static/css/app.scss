@@ -64,3 +64,12 @@ body {
   background: -ms-linear-gradient(top, #363636 0%, #242426 100%); /* IE10+ */
   background: linear-gradient(to bottom, #363636 0%, #242426 100%); /* W3C */
 }
+
+.token-generator {
+  margin: 20px 0;
+}
+
+.token-generator__token {
+  font-family: monospace;
+  padding: 0 10px;
+}
