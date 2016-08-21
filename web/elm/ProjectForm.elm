@@ -24,7 +24,6 @@ type alias ProjectForm =
     { name : ( Maybe String, Errors )
     , waiting : Bool
     , postError : Maybe String
-    , isNew : Bool
     , id : Maybe Int
     , isOpen : Bool
     }
@@ -35,7 +34,6 @@ initialProjectForm =
     { name = ( Nothing, [] )
     , waiting = False
     , postError = Nothing
-    , isNew = True
     , id = Nothing
     , isOpen = False
     }
@@ -45,7 +43,6 @@ fromProject : Project -> ProjectForm
 fromProject project =
     { initialProjectForm
         | name = ( Just project.name, [] )
-        , isNew = False
         , id = Just project.id
         , isOpen = True
     }
@@ -67,6 +64,16 @@ type Msg
 
 
 -- FUNCTIONS
+
+
+isNew : ProjectForm -> Bool
+isNew model =
+    case model.id of
+        Just _ ->
+            False
+
+        Nothing ->
+            True
 
 
 isValid : ProjectForm -> Bool
@@ -259,7 +266,7 @@ viewControls model =
                     True
 
         label =
-            if model.isNew then
+            if isNew model then
                 "Create Project"
             else
                 "Update Project"
