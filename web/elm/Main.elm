@@ -11,30 +11,36 @@ import Ports
 import ProjectForm exposing (ProjectForm)
 
 
+type alias User =
+    { name : String
+    , token : String
+    }
+
+
 type alias Model =
     { projects : ProjectList
     , projectForm : ProjectForm
-    , username : String
+    , user : User
     }
 
 
 type alias Flags =
-    { username : String }
+    User
 
 
 init : Flags -> ( Model, Cmd Msg )
-init { username } =
+init user =
     let
         ( projectFormModel, projectFormEffects ) =
-            ProjectForm.init
+            ProjectForm.init user.token
 
         effects =
             Cmd.batch
-                [ Cmd.map ApiMsg Api.getAll
+                [ Cmd.map ApiMsg (Api.getAll user.token)
                 , Cmd.map ProjectFormMsg projectFormEffects
                 ]
     in
-        ( Model ProjectList.initialModel projectFormModel username, effects )
+        ( Model ProjectList.initialModel projectFormModel user, effects )
 
 
 
@@ -110,7 +116,7 @@ update msg model =
         ProjectMsg msg ->
             case msg of
                 Project.DestroyProject project ->
-                    model ! [ Cmd.map ApiMsg <| Api.destroy project ]
+                    model ! [ Cmd.map ApiMsg <| Api.destroy model.user.token project ]
 
                 Project.EditProjectForm project ->
                     let
@@ -137,7 +143,7 @@ view model =
         , class "wall"
         ]
         [ viewNewProjectForm model
-        , viewNav model.username
+        , viewNav model.user.name
         , Html.App.map ProjectMsg <| ProjectList.view model.projects
         , div [ class "events" ] []
         ]

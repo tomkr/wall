@@ -1,6 +1,8 @@
 defmodule Wall.ProjectController do
   use Wall.Web, :controller
 
+  plug :authorize_token
+
   def index(conn, _params) do
     query = from w in "wall",
       select: %{id: w.id,
@@ -58,5 +60,17 @@ defmodule Wall.ProjectController do
       Wall.ProjectView.render("project.json", %{project: project})
     )
     send_resp(conn, :no_content, "")
+  end
+
+  defp authorize_token(conn, _options) do
+    case Phoenix.Token.verify(conn, "user socket", conn.params["token"], max_age: 1209600) do
+      {:ok, _user_id} ->
+        conn
+      {:error, _reason} ->
+        conn
+        |> put_status(:unauthorized)
+        |> text("")
+        |> halt
+    end
   end
 end

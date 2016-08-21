@@ -26,31 +26,47 @@ type alias ProjectForm =
     , postError : Maybe String
     , id : Maybe Int
     , isOpen : Bool
+    , token : String
     }
 
 
-initialProjectForm : ProjectForm
-initialProjectForm =
+initialProjectForm : String -> ProjectForm
+initialProjectForm token =
     { name = ( Nothing, [] )
     , waiting = False
     , postError = Nothing
     , id = Nothing
     , isOpen = False
+    , token = token
     }
 
 
-fromProject : Project -> ProjectForm
-fromProject project =
-    { initialProjectForm
+fromProject : Project -> ProjectForm -> ProjectForm
+fromProject project projectForm =
+    { projectForm
         | name = ( Just project.name, [] )
         , id = Just project.id
         , isOpen = True
     }
 
 
-init : ( ProjectForm, Cmd Msg )
-init =
-    ( initialProjectForm, Cmd.none )
+toProject : ProjectForm -> Result String Project
+toProject projectForm =
+    let
+        name =
+            attr .name projectForm
+    in
+        case projectForm.id of
+            Just id ->
+                Ok <| Project id name Project.Unknown Project.Unknown
+
+            Nothing ->
+                Err "could not create Project without an ID"
+
+
+init : String -> ( ProjectForm, Cmd Msg )
+init token =
+    ( initialProjectForm token, Cmd.none )
 
 
 type Msg
@@ -140,7 +156,7 @@ update msg model =
             { model | isOpen = True } ! []
 
         Edit project ->
-            fromProject project ! []
+            fromProject project model ! []
 
         SetName str ->
             { model | name = ( Just str, (validatePresence str) ) } ! []
@@ -148,10 +164,20 @@ update msg model =
         Submit ->
             let
                 effects =
-                    model
-                        |> attr .name
-                        |> Api.create
-                        |> Cmd.map ApiMsg
+                    if isNew model then
+                        model
+                            |> attr .name
+                            |> Api.create model.token
+                            |> Cmd.map ApiMsg
+                    else
+                        case toProject model of
+                            Ok project ->
+                                project
+                                    |> Api.update model.token
+                                    |> Cmd.map ApiMsg
+
+                            Err str ->
+                                Cmd.none
             in
                 if isValid model then
                     { model | waiting = True } ! [ effects ]
@@ -159,7 +185,7 @@ update msg model =
                     model ! []
 
         Cancel ->
-            init
+            init model.token
 
         ApiMsg msg ->
             case msg of
@@ -170,7 +196,7 @@ update msg model =
                     addHttpError error model ! []
 
                 _ ->
-                    init
+                    init model.token
 
 
 

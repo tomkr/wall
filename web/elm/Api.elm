@@ -25,19 +25,24 @@ type Msg
 -- FUNCTIONS
 
 
-getAll : Cmd Msg
-getAll =
-    "/api/projects"
-        |> Http.get decodeProjectsData
-        |> Task.perform FetchFailed FetchSucceeded
+getAll : String -> Cmd Msg
+getAll token =
+    let
+        url =
+            Http.url "/api/projects" [ ( "token", token ) ]
+    in
+        url
+            |> Http.get decodeProjectsData
+            |> Task.perform FetchFailed FetchSucceeded
 
 
-create : String -> Cmd Msg
-create name =
+create : String -> String -> Cmd Msg
+create token name =
     let
         body =
             Http.multipart
                 [ Http.stringData "project[name]" name
+                , Http.stringData "token" token
                 ]
     in
         body
@@ -45,13 +50,14 @@ create name =
             |> Task.perform CreateFailed CreateSucceeded
 
 
-update : Project -> Cmd Msg
-update project =
+update : String -> Project -> Cmd Msg
+update token project =
     let
         body =
             Http.multipart
                 [ Http.stringData "project[name]" project.name
                 , Http.stringData "_method" "patch"
+                , Http.stringData "token" token
                 ]
     in
         body
@@ -59,15 +65,17 @@ update project =
             |> Task.perform UpdateFailed UpdateSucceeded
 
 
-destroy : Project -> Cmd Msg
-destroy project =
+destroy : String -> Project -> Cmd Msg
+destroy token project =
     let
         url =
             "/api/projects/" ++ (toString project.id)
 
         body =
             Http.multipart
-                [ Http.stringData "_method" "delete" ]
+                [ Http.stringData "_method" "delete"
+                , Http.stringData "token" token
+                ]
     in
         Http.post emptyStringDecoder url body
             |> Task.perform DestroyFailed DestroySucceeded

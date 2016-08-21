@@ -1,3 +1,6 @@
 <script>
-  init({ username: "<%= @current_account.name %>" });
+  init({
+    name: "<%= @current_account.name %>",
+    token: userToken
+  });
 </script>
