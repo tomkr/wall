@@ -13,8 +13,7 @@ import ProjectForm exposing (ProjectForm)
 
 type alias Model =
     { projects : ProjectList
-    , showProjectForm : Bool
-    , editableProject : ProjectForm
+    , projectForm : ProjectForm
     }
 
 
@@ -30,7 +29,7 @@ init =
                 , Cmd.map ProjectFormMsg projectFormEffects
                 ]
     in
-        ( Model ProjectList.initialModel False projectFormModel, effects )
+        ( Model ProjectList.initialModel projectFormModel, effects )
 
 
 
@@ -85,39 +84,23 @@ update msg model =
 
         ProjectFormMsg childMsg ->
             let
-                ( editableProject, projectFormEffects ) =
-                    ProjectForm.update childMsg model.editableProject
+                ( projectForm, projectFormEffects ) =
+                    ProjectForm.update childMsg model.projectForm
+            in
+                ( { model | projectForm = projectForm }, Cmd.map ProjectFormMsg projectFormEffects )
 
-                newModel =
-                    { model | editableProject = editableProject }
+        NewProjectForm ->
+            let
+                ( projectFormModel, projectFormEffects ) =
+                    ProjectForm.update ProjectForm.Open model.projectForm
 
                 effects =
                     Cmd.map ProjectFormMsg projectFormEffects
             in
-                case childMsg of
-                    ProjectForm.Cancel ->
-                        ( { newModel | showProjectForm = False }, effects )
-
-                    ProjectForm.ApiMsg msg ->
-                        case msg of
-                            Api.CreateSucceeded _ ->
-                                ( { newModel | showProjectForm = False }, effects )
-
-                            Api.UpdateSucceeded _ ->
-                                ( { newModel | showProjectForm = False }, effects )
-
-                            _ ->
-                                ( newModel, effects )
-
-                    _ ->
-                        ( newModel, effects )
-
-        NewProjectForm ->
-            { model
-                | showProjectForm = True
-                , editableProject = ProjectForm.initialProjectForm
-            }
-                ! []
+                { model
+                    | projectForm = projectFormModel
+                }
+                    ! [ effects ]
 
         ProjectMsg msg ->
             case msg of
@@ -125,11 +108,14 @@ update msg model =
                     model ! [ Cmd.map ApiMsg <| Api.destroy project ]
 
                 Project.EditProjectForm project ->
-                    { model
-                        | showProjectForm = True
-                        , editableProject = ProjectForm.fromProject project
-                    }
-                        ! []
+                    let
+                        ( projectForm, effects ) =
+                            ProjectForm.update (ProjectForm.Edit project) model.projectForm
+                    in
+                        { model
+                            | projectForm = projectForm
+                        }
+                            ! [ Cmd.map ProjectFormMsg effects ]
 
                 _ ->
                     model ! []
@@ -141,22 +127,15 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    let
-        editableProjectForm =
-            if model.showProjectForm then
-                viewNewProjectForm model
-            else
-                div [] []
-    in
-        div
-            [ id "container"
-            , class "wall"
-            ]
-            [ editableProjectForm
-            , viewNav
-            , Html.App.map ProjectMsg <| ProjectList.view model.projects
-            , div [ class "events" ] []
-            ]
+    div
+        [ id "container"
+        , class "wall"
+        ]
+        [ viewNewProjectForm model
+        , viewNav
+        , Html.App.map ProjectMsg <| ProjectList.view model.projects
+        , div [ class "events" ] []
+        ]
 
 
 viewNav : Html Msg
@@ -192,13 +171,7 @@ viewNav =
 
 viewNewProjectForm : Model -> Html Msg
 viewNewProjectForm model =
-    div
-        [ class "dialog" ]
-        [ (Html.App.map
-            ProjectFormMsg
-            (ProjectForm.view model.editableProject)
-          )
-        ]
+    Html.App.map ProjectFormMsg (ProjectForm.view model.projectForm)
 
 
 

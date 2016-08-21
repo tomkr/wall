@@ -26,6 +26,7 @@ type alias ProjectForm =
     , postError : Maybe String
     , isNew : Bool
     , id : Maybe Int
+    , isOpen : Bool
     }
 
 
@@ -36,6 +37,7 @@ initialProjectForm =
     , postError = Nothing
     , isNew = True
     , id = Nothing
+    , isOpen = False
     }
 
 
@@ -45,6 +47,7 @@ fromProject project =
         | name = ( Just project.name, [] )
         , isNew = False
         , id = Just project.id
+        , isOpen = True
     }
 
 
@@ -58,6 +61,8 @@ type Msg
     | Submit
     | Cancel
     | ApiMsg Api.Msg
+    | Open
+    | Edit Project
 
 
 
@@ -98,6 +103,12 @@ validatePresence str =
 update : Msg -> ProjectForm -> ( ProjectForm, Cmd Msg )
 update msg model =
     case msg of
+        Open ->
+            { model | isOpen = True } ! []
+
+        Edit project ->
+            fromProject project ! []
+
         SetName str ->
             { model | name = ( Just str, (validatePresence str) ) } ! []
 
@@ -177,39 +188,45 @@ view model =
                    else
                     " with-errors"
     in
-        div
-            [ class "project-form-wrapper" ]
-            [ h2
-                [ class "project-form-title" ]
-                [ text "Create Project" ]
-            , viewPostError model.postError
-            , form
-                [ class "project-form"
-                , onSubmit Submit
-                ]
+        if model.isOpen then
+            div
+                [ class "dialog" ]
                 [ div
-                    [ class inputClassName
-                    ]
-                    [ label
-                        [ for "project-form-name" ]
-                        [ text "Name" ]
-                    , input
-                        [ id "project-form-name"
-                        , type' "text"
-                        , onInput SetName
-                        , value modelName
+                    [ class "project-form-wrapper" ]
+                    [ h2
+                        [ class "project-form-title" ]
+                        [ text "Create Project" ]
+                    , viewPostError model.postError
+                    , form
+                        [ class "project-form"
+                        , onSubmit Submit
                         ]
-                        []
-                    , ul
-                        [ class "errors" ]
-                        (List.map
-                            (\error -> li [ class "error" ] [ text error ])
-                            errors
-                        )
+                        [ div
+                            [ class inputClassName
+                            ]
+                            [ label
+                                [ for "project-form-name" ]
+                                [ text "Name" ]
+                            , input
+                                [ id "project-form-name"
+                                , type' "text"
+                                , onInput SetName
+                                , value modelName
+                                ]
+                                []
+                            , ul
+                                [ class "errors" ]
+                                (List.map
+                                    (\error -> li [ class "error" ] [ text error ])
+                                    errors
+                                )
+                            ]
+                        , viewControls model
+                        ]
                     ]
-                , viewControls model
                 ]
-            ]
+        else
+            div [] []
 
 
 viewPostError : Maybe String -> Html Msg
