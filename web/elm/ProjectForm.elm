@@ -3,13 +3,9 @@ module ProjectForm exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (class, type', id, for, value, disabled, href)
 import Html.Events exposing (onInput, onSubmit, onClick)
-import Json.Decode
-import Json.Encode
 import Api
 import String
-import Task
 import Http
-import Json.Decode
 import Project exposing (Project)
 
 
