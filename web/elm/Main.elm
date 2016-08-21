@@ -145,7 +145,7 @@ view model =
         [ viewNewProjectForm model
         , viewNav model.user.name
         , Html.App.map ProjectMsg <| ProjectList.view model.projects
-        , div [ class "events" ] []
+          --        , div [ class "events" ] []
         ]
 
 
