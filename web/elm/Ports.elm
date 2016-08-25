@@ -10,3 +10,6 @@ port updateProjectNotifications : (RawProject -> msg) -> Sub msg
 
 
 port deleteProjectNotifications : (RawProject -> msg) -> Sub msg
+
+
+port focus : String -> Cmd msg

@@ -7,6 +7,7 @@ import Api
 import String
 import Http
 import Project exposing (Project)
+import Ports
 
 
 -- MODEL
@@ -156,10 +157,10 @@ update : Msg -> ProjectForm -> ( ProjectForm, Cmd Msg )
 update msg model =
     case msg of
         Open ->
-            { model | isOpen = True } ! []
+            { model | isOpen = True } ! [ Ports.focus "#project-form-name" ]
 
         Edit project ->
-            fromProject project model ! []
+            fromProject project model ! [ Ports.focus "#project-form-name" ]
 
         SetName str ->
             { model | name = ( Just str, (validatePresence str) ) } ! []

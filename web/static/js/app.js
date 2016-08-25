@@ -22,6 +22,14 @@ import socket from "./socket";
 
 window.init = function(options) {
   window.app = Elm.Main.fullscreen(options);
+  app.ports.focus.subscribe(selector => {
+    setTimeout(function() {
+      const nodes = document.querySelectorAll(selector);
+      if(nodes.length === 1 && document.activeElement !== nodes[0]) {
+        nodes[0].focus();
+      }
+    }, 50);
+  });
   const channel = socket.channel("notifications:lobby", {});
   channel.on("newProject", payload => {
     try {
