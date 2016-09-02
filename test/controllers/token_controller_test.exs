@@ -10,6 +10,7 @@ defmodule Wall.TokenControllerTest do
     Repo.insert(%Wall.Project{id: 1, name: "project 1"})
     conn = get conn, project_token_path(conn, :show, "123"), token: token
     token = json_response(conn, 200)["token"]
-    assert Phoenix.Token.verify(conn, "token", token) == {:ok, "123"}
+    {:ok, decoded_token} = Base.url_decode64(token)
+    assert Phoenix.Token.verify(conn, "token", decoded_token) == {:ok, "123"}
   end
 end

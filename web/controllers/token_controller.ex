@@ -5,6 +5,7 @@ defmodule Wall.TokenController do
 
   def show(conn, %{"project_id" => project_id}) do
     token = Phoenix.Token.sign(conn, "token", project_id)
+    |> Base.url_encode64
     conn
     |> json(%{token: token})
   end
