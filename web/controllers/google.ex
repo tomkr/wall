@@ -41,6 +41,8 @@ defmodule Wall.Google do
     case access_token do
       {:ok, %OAuth2.Response{status_code: 401}} ->
         {:error, :unauthorized}
+      {:ok, %OAuth2.Response{status_code: 403}} ->
+        {:error, :access_not_configured}
       {:ok, %OAuth2.Response{status_code: status_code, body: body}} when status_code in 200..299 ->
         {:ok, body}
       {:ok, _response} ->
